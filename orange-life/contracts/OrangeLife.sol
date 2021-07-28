@@ -12,7 +12,20 @@ contract OrangeLife {
     address[] accessRequested;
   }
 
+  // global storage for all medical records
   mapping (address => MedicalRecord[]) medicalRecords;
+
+  // events
+  event NewMedicalRecord(address owner, uint idx);
+  // event AccessedAllMedicalRecords(address accessor, address owner);
+  // event AccessedMedicalRecord(address accessor, address owner, uint idx);
+  event RequestedAccess(address requestor, address owner, uint idx);
+  event GrantedAccess(address requestor, address owner, uint idx);
+  event RevokedAccess(address requestor, address owner, uint idx);
+
+  // TODO: errors are not supported in 0.5.16
+  // errors
+  // error DoesNotHaveAccess(address requestor, address owner, uint idx);
 
   constructor() public {
   }
@@ -36,16 +49,20 @@ contract OrangeLife {
     hasAccess[0] = owner;
     address[] memory accessRequested = new address[](0);
     medicalRecords[owner].push(MedicalRecord({docCID: docCID, nonce: nonce, hasAccess: hasAccess, accessRequested: accessRequested}));
+
+    emit NewMedicalRecord(owner, medicalRecords[owner].length-1);
   }
 
   function getMedicalRecords(address owner) public view returns (MedicalRecord[] memory records) {
-    // TODO: add event here
+    // emit AccessedAllMedicalRecords(msg.sender, owner);
 
     return medicalRecords[owner];
   }
 
   function getMedicalRecord(address owner, uint idx) public view returns (MedicalRecord memory record) {
-    // TODO: add event here
+    require(idx < medicalRecords[owner].length);
+
+    // emit AccessedMedicalRecord(msg.sender, owner, idx);
 
     return medicalRecords[owner][idx];
   }
@@ -54,7 +71,7 @@ contract OrangeLife {
   function requestAccess(address owner, uint idx) public {
     require(idx < medicalRecords[owner].length);
 
-    // TODO: add event here
+    emit RequestedAccess(msg.sender, owner, idx);
 
     medicalRecords[owner][idx].accessRequested.push(msg.sender);
   }
@@ -62,7 +79,7 @@ contract OrangeLife {
   function grantAccess(address addrToGrant, uint idx) public {
     require(idx < medicalRecords[msg.sender].length);
 
-    // TODO: add event here
+    emit GrantedAccess(msg.sender, addrToGrant, idx);
 
     medicalRecords[msg.sender][idx].hasAccess.push(addrToGrant);
   }
@@ -79,9 +96,10 @@ contract OrangeLife {
     }
 
     if (searchIdx == medicalRecords[msg.sender][idx].hasAccess.length) {
-      // TODO: add error here
-      revert();
+      revert(); // DoesNotHaveAccess({requestor: addrToRevoke, owner: msg.sender, idx: idx});
     }
+
+    emit RevokedAccess(msg.sender, addrToRevoke, idx);
 
     deleteAddressAtIndex(medicalRecords[msg.sender][idx].hasAccess, searchIdx);
   }
