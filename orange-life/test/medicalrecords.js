@@ -4,7 +4,7 @@ contract("Test orange life", async accounts => {
     it("should add and get new medical record", async () => {
         const docCID = "QmbWqxBEKC3P8tqsKc98xmWNzrzDtRLMiMPL8wBuTGsMnR";
         const orange = await OrangeLife.deployed();
-        await orange.addMedicalRecord(docCID, 1, {"from": accounts[0]});
+        await orange.addMedicalRecord(docCID, "0314e0715b1be36b2a034ba528594f39881996618c54b3888eddbd5eff7b558940", 1, {"from": accounts[0]});
 
         const res1 = await orange.getMedicalRecords(accounts[0]);
         assert.equal(res1.length, 1);
@@ -16,7 +16,7 @@ contract("Test orange life", async accounts => {
     it("should add and get particular medical record", async () => {
         const docCID = "QmbWqxBEKC3P8tqsKc98xmWNzrzDtRLMiMPL8wBuTGsMnS";
         const orange = await OrangeLife.deployed();
-        await orange.addMedicalRecord(docCID, 100, {"from": accounts[0]});
+        await orange.addMedicalRecord(docCID, "0314e0715b1be36b2a034ba528594f39881996618c54b3888eddbd5eff7b558940", 100, {"from": accounts[0]});
 
         const res1 = await orange.getMedicalRecord(accounts[0], 1);;
         assert.equal(res1.docCID, docCID);

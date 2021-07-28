@@ -7,6 +7,7 @@ pragma experimental ABIEncoderV2;
 contract OrangeLife {
   struct MedicalRecord {
     string docCID;
+    string verifyingKey;
     uint32 nonce;
     address[] hasAccess;
     address[] accessRequested;
@@ -37,7 +38,7 @@ contract OrangeLife {
     arr.pop();
   }
 
-  function addMedicalRecord(string memory docCID, uint32 nonce) public {
+  function addMedicalRecord(string memory docCID, string memory verifyingKey, uint32 nonce) public {
     address owner = msg.sender;
     // uint idx = medicalRecords[owner].length;
     // medicalRecords[owner].push();
@@ -48,7 +49,13 @@ contract OrangeLife {
     address[] memory hasAccess = new address[](1);
     hasAccess[0] = owner;
     address[] memory accessRequested = new address[](0);
-    medicalRecords[owner].push(MedicalRecord({docCID: docCID, nonce: nonce, hasAccess: hasAccess, accessRequested: accessRequested}));
+    medicalRecords[owner].push(MedicalRecord({
+      docCID: docCID,
+      nonce: nonce,
+      hasAccess: hasAccess,
+      accessRequested: accessRequested,
+      verifyingKey: verifyingKey
+    }));
 
     emit NewMedicalRecord(owner, medicalRecords[owner].length-1);
   }
