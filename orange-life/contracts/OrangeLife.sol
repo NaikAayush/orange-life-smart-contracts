@@ -8,6 +8,7 @@ contract OrangeLife {
   struct MedicalRecord {
     string docCID;
     string verifyingKey;
+    string publicKey;
     uint32 nonce;
     address[] hasAccess;
     address[] accessRequested;
@@ -38,7 +39,7 @@ contract OrangeLife {
     arr.pop();
   }
 
-  function addMedicalRecord(string memory docCID, string memory verifyingKey, uint32 nonce) public {
+  function addMedicalRecord(string memory docCID, string memory verifyingKey, string memory publicKey, uint32 nonce) public {
     address owner = msg.sender;
     // uint idx = medicalRecords[owner].length;
     // medicalRecords[owner].push();
@@ -54,7 +55,8 @@ contract OrangeLife {
       nonce: nonce,
       hasAccess: hasAccess,
       accessRequested: accessRequested,
-      verifyingKey: verifyingKey
+      verifyingKey: verifyingKey,
+      publicKey: publicKey
     }));
 
     emit NewMedicalRecord(owner, medicalRecords[owner].length-1);
