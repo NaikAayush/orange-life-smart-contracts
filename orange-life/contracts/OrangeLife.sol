@@ -4,7 +4,9 @@ pragma solidity >=0.5.16 <0.9.0;
 // enable support to return a dynamic array (MedicalRecord[] in our case)
 pragma experimental ABIEncoderV2;
 
-contract OrangeLife {
+import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+
+contract OrangeLife is BaseRelayRecipient {
   struct MedicalRecord {
     string docCID;
     string verifyingKey;
@@ -16,6 +18,7 @@ contract OrangeLife {
 
   // global storage for all medical records
   mapping (address => MedicalRecord[]) medicalRecords;
+  address owner;
 
   // events
   event NewMedicalRecord(address owner, uint idx);
@@ -29,7 +32,18 @@ contract OrangeLife {
   // errors
   // error DoesNotHaveAccess(address requestor, address owner, uint idx);
 
-  constructor() public {
+  constructor(address _trustedForwarder) {
+    trustedForwarder = _trustedForwarder;
+    owner = _msgSender();
+  }
+
+  modifier _ownerOnly() {
+    require(_msgSender() == owner);
+    _;
+  }
+
+  function setTrustedForwarder(address _trustedForwarder) public _ownerOnly {
+    trustedForwarder = _trustedForwarder;
   }
 
   // helper to remove address at index in an address array
@@ -40,17 +54,17 @@ contract OrangeLife {
   }
 
   function addMedicalRecord(string memory docCID, string memory verifyingKey, string memory publicKey, uint32 nonce) public {
-    address owner = msg.sender;
-    // uint idx = medicalRecords[owner].length;
-    // medicalRecords[owner].push();
-    // MedicalRecord storage record = medicalRecords[owner][idx];
+    address sender = _msgSender();
+    // uint idx = medicalRecords[sender].length;
+    // medicalRecords[sender].push();
+    // MedicalRecord storage record = medicalRecords[sender][idx];
     // record.docCID = docCID;
     // record.nonce = nonce;
-    // record.hasAccess = [owner];
+    // record.hasAccess = [sender];
     address[] memory hasAccess = new address[](1);
-    hasAccess[0] = owner;
+    hasAccess[0] = sender;
     address[] memory accessRequested = new address[](0);
-    medicalRecords[owner].push(MedicalRecord({
+    medicalRecords[sender].push(MedicalRecord({
       docCID: docCID,
       nonce: nonce,
       hasAccess: hasAccess,
@@ -59,57 +73,66 @@ contract OrangeLife {
       publicKey: publicKey
     }));
 
-    emit NewMedicalRecord(owner, medicalRecords[owner].length-1);
+    emit NewMedicalRecord(sender, medicalRecords[sender].length-1);
   }
 
-  function getMedicalRecords(address owner) public view returns (MedicalRecord[] memory records) {
-    // emit AccessedAllMedicalRecords(msg.sender, owner);
+  function getMedicalRecords(address sender) public view returns (MedicalRecord[] memory records) {
+    // emit AccessedAllMedicalRecords(_msgSender(), sender);
 
-    return medicalRecords[owner];
+    return medicalRecords[sender];
   }
 
-  function getMedicalRecord(address owner, uint idx) public view returns (MedicalRecord memory record) {
-    require(idx < medicalRecords[owner].length);
+  function getMedicalRecord(address sender, uint idx) public view returns (MedicalRecord memory record) {
+    require(idx < medicalRecords[sender].length);
 
-    // emit AccessedMedicalRecord(msg.sender, owner, idx);
+    // emit AccessedMedicalRecord(_msgSender(), sender, idx);
 
-    return medicalRecords[owner][idx];
+    return medicalRecords[sender][idx];
   }
 
   // idx is index of medical record in the array (specific to each address)
-  function requestAccess(address owner, uint idx) public {
-    require(idx < medicalRecords[owner].length);
+  function requestAccess(address sender, uint idx) public {
+    require(idx < medicalRecords[sender].length);
 
-    emit RequestedAccess(msg.sender, owner, idx);
+    emit RequestedAccess(_msgSender(), sender, idx);
 
-    medicalRecords[owner][idx].accessRequested.push(msg.sender);
+    medicalRecords[sender][idx].accessRequested.push(_msgSender());
   }
 
   function grantAccess(address addrToGrant, uint idx) public {
-    require(idx < medicalRecords[msg.sender].length);
+    require(idx < medicalRecords[_msgSender()].length);
 
-    emit GrantedAccess(msg.sender, addrToGrant, idx);
+    emit GrantedAccess(_msgSender(), addrToGrant, idx);
 
-    medicalRecords[msg.sender][idx].hasAccess.push(addrToGrant);
+    medicalRecords[_msgSender()][idx].hasAccess.push(addrToGrant);
   }
 
   function revokeAccess(address addrToRevoke, uint idx) public {
-    require(idx < medicalRecords[msg.sender].length);
+    require(idx < medicalRecords[_msgSender()].length);
 
     uint searchIdx = 0;
-    while (searchIdx < medicalRecords[msg.sender][idx].hasAccess.length) {
-      if (medicalRecords[msg.sender][idx].hasAccess[searchIdx] == addrToRevoke) {
+    while (searchIdx < medicalRecords[_msgSender()][idx].hasAccess.length) {
+      if (medicalRecords[_msgSender()][idx].hasAccess[searchIdx] == addrToRevoke) {
         break;
       }
       searchIdx++;
     }
 
-    if (searchIdx == medicalRecords[msg.sender][idx].hasAccess.length) {
-      revert(); // DoesNotHaveAccess({requestor: addrToRevoke, owner: msg.sender, idx: idx});
+    if (searchIdx == medicalRecords[_msgSender()][idx].hasAccess.length) {
+      revert(); // DoesNotHaveAccess({requestor: addrToRevoke, sender: _msgSender(), idx: idx});
     }
 
-    emit RevokedAccess(msg.sender, addrToRevoke, idx);
+    emit RevokedAccess(_msgSender(), addrToRevoke, idx);
 
-    deleteAddressAtIndex(medicalRecords[msg.sender][idx].hasAccess, searchIdx);
+    deleteAddressAtIndex(medicalRecords[_msgSender()][idx].hasAccess, searchIdx);
+  }
+  
+  /** 
+    * Override this function.
+    * This version is to keep track of BaseRelayRecipient you are using
+    * in your contract. 
+    */
+  function versionRecipient() external view override returns (string memory) {
+      return "1";
   }
 }
