@@ -1,0 +1,20 @@
+{
+  "name": "orange-life-contracts",
+  "version": "0.0.1",
+  "description": "Smart Contracts for Orange Life",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "@opengsn/provider": "^2.2.2",
+    "@truffle/hdwallet-provider": "^1.4.2",
+    "truffle": "^5.4.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Samyak Sarnayak",
+  "license": "MIT"
+}
