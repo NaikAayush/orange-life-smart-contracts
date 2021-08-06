@@ -21,7 +21,7 @@ contract OrangeLife is BaseRelayRecipient {
   address owner;
 
   // events
-  event NewMedicalRecord(address owner, uint idx);
+  event NewMedicalRecord(address owner, uint idx, string docCID, string verifyingKey, string publicKey, uint32 nonce);
   // event AccessedAllMedicalRecords(address accessor, address owner);
   // event AccessedMedicalRecord(address accessor, address owner, uint idx);
   event RequestedAccess(address requestor, address owner, uint idx);
@@ -73,7 +73,7 @@ contract OrangeLife is BaseRelayRecipient {
       publicKey: publicKey
     }));
 
-    emit NewMedicalRecord(sender, medicalRecords[sender].length-1);
+    emit NewMedicalRecord(sender, medicalRecords[sender].length-1, docCID, verifyingKey, publicKey, nonce);
   }
 
   function getMedicalRecords(address sender) public view returns (MedicalRecord[] memory records) {
@@ -132,7 +132,7 @@ contract OrangeLife is BaseRelayRecipient {
     * This version is to keep track of BaseRelayRecipient you are using
     * in your contract. 
     */
-  function versionRecipient() external view override returns (string memory) {
+  function versionRecipient() external pure override returns (string memory) {
       return "1";
   }
 }
