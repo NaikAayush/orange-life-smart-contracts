@@ -24,9 +24,9 @@ contract OrangeLife is BaseRelayRecipient {
   event NewMedicalRecord(address owner, uint idx, string docCID, string verifyingKey, string publicKey, uint32 nonce);
   // event AccessedAllMedicalRecords(address accessor, address owner);
   // event AccessedMedicalRecord(address accessor, address owner, uint idx);
-  event RequestedAccess(address requestor, address owner, uint idx);
-  event GrantedAccess(address requestor, address owner, uint idx);
-  event RevokedAccess(address requestor, address owner, uint idx);
+  event RequestedAccess(address requestor, address owner, uint idx, string docCID);
+  event GrantedAccess(address requestor, address owner, uint idx, string docCID);
+  event RevokedAccess(address requestor, address owner, uint idx, string docCID);
 
   // TODO: errors are not supported in 0.5.16
   // errors
@@ -94,7 +94,7 @@ contract OrangeLife is BaseRelayRecipient {
   function requestAccess(address sender, uint idx) public {
     require(idx < medicalRecords[sender].length);
 
-    emit RequestedAccess(_msgSender(), sender, idx);
+    emit RequestedAccess(_msgSender(), sender, idx, medicalRecords[sender][idx].docCID);
 
     medicalRecords[sender][idx].accessRequested.push(_msgSender());
   }
@@ -102,7 +102,7 @@ contract OrangeLife is BaseRelayRecipient {
   function grantAccess(address addrToGrant, uint idx) public {
     require(idx < medicalRecords[_msgSender()].length);
 
-    emit GrantedAccess(_msgSender(), addrToGrant, idx);
+    emit GrantedAccess(_msgSender(), addrToGrant, idx, medicalRecords[_msgSender()][idx].docCID);
 
     medicalRecords[_msgSender()][idx].hasAccess.push(addrToGrant);
   }
@@ -122,7 +122,7 @@ contract OrangeLife is BaseRelayRecipient {
       revert(); // DoesNotHaveAccess({requestor: addrToRevoke, sender: _msgSender(), idx: idx});
     }
 
-    emit RevokedAccess(_msgSender(), addrToRevoke, idx);
+    emit RevokedAccess(_msgSender(), addrToRevoke, idx, medicalRecords[_msgSender()][idx].docCID);
 
     deleteAddressAtIndex(medicalRecords[_msgSender()][idx].hasAccess, searchIdx);
   }
