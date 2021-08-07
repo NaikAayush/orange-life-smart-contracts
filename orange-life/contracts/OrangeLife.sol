@@ -4,9 +4,9 @@ pragma solidity >=0.5.16 <0.9.0;
 // enable support to return a dynamic array (MedicalRecord[] in our case)
 pragma experimental ABIEncoderV2;
 
-import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+import "@openzeppelin/contracts/GSN/GSNRecipient.sol";
 
-contract OrangeLife is BaseRelayRecipient {
+contract OrangeLife is GSNRecipient {
   struct MedicalRecord {
     string docCID;
     string verifyingKey;
@@ -32,18 +32,13 @@ contract OrangeLife is BaseRelayRecipient {
   // errors
   // error DoesNotHaveAccess(address requestor, address owner, uint idx);
 
-  constructor(address _trustedForwarder) {
-    trustedForwarder = _trustedForwarder;
+  constructor() {
     owner = _msgSender();
   }
 
   modifier _ownerOnly() {
     require(_msgSender() == owner);
     _;
-  }
-
-  function setTrustedForwarder(address _trustedForwarder) public _ownerOnly {
-    trustedForwarder = _trustedForwarder;
   }
 
   // helper to remove address at index in an address array
@@ -126,13 +121,27 @@ contract OrangeLife is BaseRelayRecipient {
 
     deleteAddressAtIndex(medicalRecords[_msgSender()][idx].hasAccess, searchIdx);
   }
-  
-  /** 
-    * Override this function.
-    * This version is to keep track of BaseRelayRecipient you are using
-    * in your contract. 
-    */
-  function versionRecipient() external pure override returns (string memory) {
-      return "1";
+
+  function acceptRelayedCall(
+      address relay,
+      address from,
+      bytes calldata encodedFunction,
+      uint256 transactionFee,
+      uint256 gasPrice,
+      uint256 gasLimit,
+      uint256 nonce,
+      bytes calldata approvalData,
+      uint256 maxPossibleCharge
+  ) external override pure returns (uint256, bytes memory) {
+      // TODO: control which calls to relay
+      // reference: https://docs.openzeppelin.com/contracts/3.x/gsn-strategies
+      return _approveRelayedCall();
+  }
+
+  // We won't do any pre or post processing, so leave _preRelayedCall and _postRelayedCall empty
+  function _preRelayedCall(bytes memory context) internal override returns (bytes32) {
+  }
+
+  function _postRelayedCall(bytes memory context, bool, uint256 actualCharge, bytes32) internal override {
   }
 }
