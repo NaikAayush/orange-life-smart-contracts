@@ -1,5 +1,7 @@
 const OrangeLife = artifacts.require("OrangeLife");
 
 module.exports = function (deployer) {
-  deployer.deploy(OrangeLife, "0x9399BB24DBB5C4b782C70c2969F58716Ebbd6a3b");
+  // TODO: this address is matic gsnv2's Forwarder of Mumbai Testnet
+  // source: https://docs.matic.network/docs/develop/metatransactions/metatransactions-gsn/#gsnv2
+  deployer.deploy(OrangeLife, "0xF65De530849aC11d6931b07A52C17e054489920e");
 };

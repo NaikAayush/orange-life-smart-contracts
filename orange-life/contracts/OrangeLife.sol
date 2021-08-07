@@ -4,9 +4,11 @@ pragma solidity >=0.5.16 <0.9.0;
 // enable support to return a dynamic array (MedicalRecord[] in our case)
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/GSN/GSNRecipient.sol";
+import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+// import "@opengsn/contracts/src/interfaces/IKnowForwarderAddress.sol";
 
-contract OrangeLife is GSNRecipient {
+
+contract OrangeLife is BaseRelayRecipient {
   struct MedicalRecord {
     string docCID;
     string verifyingKey;
@@ -18,7 +20,10 @@ contract OrangeLife is GSNRecipient {
 
   // global storage for all medical records
   mapping (address => MedicalRecord[]) medicalRecords;
-  address owner;
+  
+  address public deployer;
+  string private _str;
+  address private _strOwner;
 
   // events
   event NewMedicalRecord(address owner, uint idx, string docCID, string verifyingKey, string publicKey, uint32 nonce);
@@ -32,12 +37,18 @@ contract OrangeLife is GSNRecipient {
   // errors
   // error DoesNotHaveAccess(address requestor, address owner, uint idx);
 
-  constructor() {
-    owner = _msgSender();
-  }
+    constructor(address forwarder) {
+        trustedForwarder = forwarder;
+
+        deployer = msg.sender;
+
+        // initializing it with this
+        _str = "init";
+        _strOwner = msg.sender;
+    }
 
   modifier _ownerOnly() {
-    require(_msgSender() == owner);
+    require(_msgSender() == _strOwner);
     _;
   }
 
@@ -122,26 +133,43 @@ contract OrangeLife is GSNRecipient {
     deleteAddressAtIndex(medicalRecords[_msgSender()][idx].hasAccess, searchIdx);
   }
 
-  function acceptRelayedCall(
-      address relay,
-      address from,
-      bytes calldata encodedFunction,
-      uint256 transactionFee,
-      uint256 gasPrice,
-      uint256 gasLimit,
-      uint256 nonce,
-      bytes calldata approvalData,
-      uint256 maxPossibleCharge
-  ) external override pure returns (uint256, bytes memory) {
-      // TODO: control which calls to relay
-      // reference: https://docs.openzeppelin.com/contracts/3.x/gsn-strategies
-      return _approveRelayedCall();
+
+  // event to be emitted for denoting string got updated
+  event StringUpdated(string _prev, address _preOwner, string _current, address _currentOwner);
+
+  function getTrustedForwarder() public view returns(address) {
+      return trustedForwarder;
   }
 
-  // We won't do any pre or post processing, so leave _preRelayedCall and _postRelayedCall empty
-  function _preRelayedCall(bytes memory context) internal override returns (bytes32) {
+  function setTrustedForwarder(address forwarder) public {
+      require(_msgSender() == deployer, "Only deployer can update it");
+
+      trustedForwarder = forwarder;
   }
 
-  function _postRelayedCall(bytes memory context, bool, uint256 actualCharge, bytes32) internal override {
+  // get current string
+  function getString() public view returns(string memory) {
+      return _str;
+  }
+
+  // get current string owner
+  function getStringOwner() public view returns(address) {
+      return _strOwner;
+  }
+
+  // updates string content & also owner address
+  // with the address which invoked this function
+  function update(string memory _string) external _ownerOnly {
+      string memory _tmpStr = _str;
+      address _tmpStrOwner = _strOwner;
+
+      _str = _string;
+      _strOwner = _msgSender();
+
+      emit StringUpdated(_tmpStr, _tmpStrOwner, _str, _strOwner);
+  }
+
+  function versionRecipient() external virtual view override returns (string memory) {
+      return "1.0";
   }
 }
