@@ -5,37 +5,59 @@ pragma solidity >=0.5.16 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+
 // import "@opengsn/contracts/src/interfaces/IKnowForwarderAddress.sol";
 
-
 contract OrangeLife is BaseRelayRecipient {
-  struct MedicalRecord {
-    string docCID;
-    string verifyingKey;
-    string publicKey;
-    uint32 nonce;
-    address[] hasAccess;
-    address[] accessRequested;
-  }
+    struct MedicalRecord {
+        string docCID;
+        string verifyingKey;
+        string publicKey;
+        uint32 nonce;
+        address[] hasAccess;
+        address[] accessRequested;
+    }
 
-  // global storage for all medical records
-  mapping (address => MedicalRecord[]) medicalRecords;
-  
-  address public deployer;
-  string private _str;
-  address private _strOwner;
+    // global storage for all medical records
+    mapping(address => MedicalRecord[]) medicalRecords;
 
-  // events
-  event NewMedicalRecord(address owner, uint idx, string docCID, string verifyingKey, string publicKey, uint32 nonce);
-  // event AccessedAllMedicalRecords(address accessor, address owner);
-  // event AccessedMedicalRecord(address accessor, address owner, uint idx);
-  event RequestedAccess(address requestor, address owner, uint idx, string docCID);
-  event GrantedAccess(address requestor, address owner, uint idx, string docCID);
-  event RevokedAccess(address requestor, address owner, uint idx, string docCID);
+    address public deployer;
+    string private _str;
+    address private _strOwner;
 
-  // TODO: errors are not supported in 0.5.16
-  // errors
-  // error DoesNotHaveAccess(address requestor, address owner, uint idx);
+    // events
+    event NewMedicalRecord(
+        address owner,
+        uint256 idx,
+        string docCID,
+        string verifyingKey,
+        string publicKey,
+        uint32 nonce
+    );
+    // event AccessedAllMedicalRecords(address accessor, address owner);
+    // event AccessedMedicalRecord(address accessor, address owner, uint idx);
+    event RequestedAccess(
+        address requestor,
+        address owner,
+        uint256 idx,
+        string docCID
+    );
+    event GrantedAccess(
+        address requestor,
+        address owner,
+        uint256 idx,
+        string docCID
+    );
+    event RevokedAccess(
+        address requestor,
+        address owner,
+        uint256 idx,
+        string docCID
+    );
+
+    // TODO: errors are not supported in 0.5.16
+    // errors
+    // error DoesNotHaveAccess(address requestor, address owner, uint idx);
 
     constructor(address forwarder) {
         trustedForwarder = forwarder;
@@ -47,129 +69,182 @@ contract OrangeLife is BaseRelayRecipient {
         _strOwner = msg.sender;
     }
 
-  modifier _ownerOnly() {
-    require(_msgSender() == _strOwner);
-    _;
-  }
-
-  // helper to remove address at index in an address array
-  function deleteAddressAtIndex(address[] storage arr, uint idx) private {
-    require(idx < arr.length);
-    arr[idx] = arr[arr.length - 1];
-    arr.pop();
-  }
-
-  function addMedicalRecord(string memory docCID, string memory verifyingKey, string memory publicKey, uint32 nonce) public {
-    address sender = _msgSender();
-    // uint idx = medicalRecords[sender].length;
-    // medicalRecords[sender].push();
-    // MedicalRecord storage record = medicalRecords[sender][idx];
-    // record.docCID = docCID;
-    // record.nonce = nonce;
-    // record.hasAccess = [sender];
-    address[] memory hasAccess = new address[](1);
-    hasAccess[0] = sender;
-    address[] memory accessRequested = new address[](0);
-    medicalRecords[sender].push(MedicalRecord({
-      docCID: docCID,
-      nonce: nonce,
-      hasAccess: hasAccess,
-      accessRequested: accessRequested,
-      verifyingKey: verifyingKey,
-      publicKey: publicKey
-    }));
-
-    emit NewMedicalRecord(sender, medicalRecords[sender].length-1, docCID, verifyingKey, publicKey, nonce);
-  }
-
-  function getMedicalRecords(address sender) public view returns (MedicalRecord[] memory records) {
-    // emit AccessedAllMedicalRecords(_msgSender(), sender);
-
-    return medicalRecords[sender];
-  }
-
-  function getMedicalRecord(address sender, uint idx) public view returns (MedicalRecord memory record) {
-    require(idx < medicalRecords[sender].length);
-
-    // emit AccessedMedicalRecord(_msgSender(), sender, idx);
-
-    return medicalRecords[sender][idx];
-  }
-
-  // idx is index of medical record in the array (specific to each address)
-  function requestAccess(address sender, uint idx) public {
-    require(idx < medicalRecords[sender].length);
-
-    emit RequestedAccess(_msgSender(), sender, idx, medicalRecords[sender][idx].docCID);
-
-    medicalRecords[sender][idx].accessRequested.push(_msgSender());
-  }
-
-  function grantAccess(address addrToGrant, uint idx) public {
-    require(idx < medicalRecords[_msgSender()].length);
-
-    emit GrantedAccess(_msgSender(), addrToGrant, idx, medicalRecords[_msgSender()][idx].docCID);
-
-    medicalRecords[_msgSender()][idx].hasAccess.push(addrToGrant);
-  }
-
-  function revokeAccess(address addrToRevoke, uint idx) public {
-    require(idx < medicalRecords[_msgSender()].length);
-
-    uint searchIdx = 0;
-    while (searchIdx < medicalRecords[_msgSender()][idx].hasAccess.length) {
-      if (medicalRecords[_msgSender()][idx].hasAccess[searchIdx] == addrToRevoke) {
-        break;
-      }
-      searchIdx++;
+    modifier _ownerOnly() {
+        require(_msgSender() == _strOwner);
+        _;
     }
 
-    if (searchIdx == medicalRecords[_msgSender()][idx].hasAccess.length) {
-      revert(); // DoesNotHaveAccess({requestor: addrToRevoke, sender: _msgSender(), idx: idx});
+    // helper to remove address at index in an address array
+    function deleteAddressAtIndex(address[] storage arr, uint256 idx) private {
+        require(idx < arr.length);
+        arr[idx] = arr[arr.length - 1];
+        arr.pop();
     }
 
-    emit RevokedAccess(_msgSender(), addrToRevoke, idx, medicalRecords[_msgSender()][idx].docCID);
+    function addMedicalRecord(
+        string memory docCID,
+        string memory verifyingKey,
+        string memory publicKey,
+        uint32 nonce
+    ) public {
+        address sender = _msgSender();
+        // uint idx = medicalRecords[sender].length;
+        // medicalRecords[sender].push();
+        // MedicalRecord storage record = medicalRecords[sender][idx];
+        // record.docCID = docCID;
+        // record.nonce = nonce;
+        // record.hasAccess = [sender];
+        address[] memory hasAccess = new address[](1);
+        hasAccess[0] = sender;
+        address[] memory accessRequested = new address[](0);
+        medicalRecords[sender].push(
+            MedicalRecord({
+                docCID: docCID,
+                nonce: nonce,
+                hasAccess: hasAccess,
+                accessRequested: accessRequested,
+                verifyingKey: verifyingKey,
+                publicKey: publicKey
+            })
+        );
 
-    deleteAddressAtIndex(medicalRecords[_msgSender()][idx].hasAccess, searchIdx);
-  }
+        emit NewMedicalRecord(
+            sender,
+            medicalRecords[sender].length - 1,
+            docCID,
+            verifyingKey,
+            publicKey,
+            nonce
+        );
+    }
 
+    function getMedicalRecords(address sender)
+        public
+        view
+        returns (MedicalRecord[] memory records)
+    {
+        // emit AccessedAllMedicalRecords(_msgSender(), sender);
 
-  // event to be emitted for denoting string got updated
-  event StringUpdated(string _prev, address _preOwner, string _current, address _currentOwner);
+        return medicalRecords[sender];
+    }
 
-  function getTrustedForwarder() public view returns(address) {
-      return trustedForwarder;
-  }
+    function getMedicalRecord(address sender, uint256 idx)
+        public
+        view
+        returns (MedicalRecord memory record)
+    {
+        require(idx < medicalRecords[sender].length);
 
-  function setTrustedForwarder(address forwarder) public {
-      require(_msgSender() == deployer, "Only deployer can update it");
+        // emit AccessedMedicalRecord(_msgSender(), sender, idx);
 
-      trustedForwarder = forwarder;
-  }
+        return medicalRecords[sender][idx];
+    }
 
-  // get current string
-  function getString() public view returns(string memory) {
-      return _str;
-  }
+    // idx is index of medical record in the array (specific to each address)
+    function requestAccess(address sender, uint256 idx) public {
+        require(idx < medicalRecords[sender].length);
 
-  // get current string owner
-  function getStringOwner() public view returns(address) {
-      return _strOwner;
-  }
+        emit RequestedAccess(
+            _msgSender(),
+            sender,
+            idx,
+            medicalRecords[sender][idx].docCID
+        );
 
-  // updates string content & also owner address
-  // with the address which invoked this function
-  function update(string memory _string) external _ownerOnly {
-      string memory _tmpStr = _str;
-      address _tmpStrOwner = _strOwner;
+        medicalRecords[sender][idx].accessRequested.push(_msgSender());
+    }
 
-      _str = _string;
-      _strOwner = _msgSender();
+    function grantAccess(address addrToGrant, uint256 idx) public {
+        require(idx < medicalRecords[_msgSender()].length);
 
-      emit StringUpdated(_tmpStr, _tmpStrOwner, _str, _strOwner);
-  }
+        emit GrantedAccess(
+            _msgSender(),
+            addrToGrant,
+            idx,
+            medicalRecords[_msgSender()][idx].docCID
+        );
 
-  function versionRecipient() external virtual view override returns (string memory) {
-      return "1.0";
-  }
+        medicalRecords[_msgSender()][idx].hasAccess.push(addrToGrant);
+    }
+
+    function revokeAccess(address addrToRevoke, uint256 idx) public {
+        require(idx < medicalRecords[_msgSender()].length);
+
+        uint256 searchIdx = 0;
+        while (searchIdx < medicalRecords[_msgSender()][idx].hasAccess.length) {
+            if (
+                medicalRecords[_msgSender()][idx].hasAccess[searchIdx] ==
+                addrToRevoke
+            ) {
+                break;
+            }
+            searchIdx++;
+        }
+
+        if (searchIdx == medicalRecords[_msgSender()][idx].hasAccess.length) {
+            revert(); // DoesNotHaveAccess({requestor: addrToRevoke, sender: _msgSender(), idx: idx});
+        }
+
+        emit RevokedAccess(
+            _msgSender(),
+            addrToRevoke,
+            idx,
+            medicalRecords[_msgSender()][idx].docCID
+        );
+
+        deleteAddressAtIndex(
+            medicalRecords[_msgSender()][idx].hasAccess,
+            searchIdx
+        );
+    }
+
+    // event to be emitted for denoting string got updated
+    event StringUpdated(
+        string _prev,
+        address _preOwner,
+        string _current,
+        address _currentOwner
+    );
+
+    function getTrustedForwarder() public view returns (address) {
+        return trustedForwarder;
+    }
+
+    function setTrustedForwarder(address forwarder) public {
+        require(_msgSender() == deployer, "Only deployer can update it");
+
+        trustedForwarder = forwarder;
+    }
+
+    // get current string
+    function getString() public view returns (string memory) {
+        return _str;
+    }
+
+    // get current string owner
+    function getStringOwner() public view returns (address) {
+        return _strOwner;
+    }
+
+    // updates string content & also owner address
+    // with the address which invoked this function
+    function update(string memory _string) external _ownerOnly {
+        string memory _tmpStr = _str;
+        address _tmpStrOwner = _strOwner;
+
+        _str = _string;
+        _strOwner = _msgSender();
+
+        emit StringUpdated(_tmpStr, _tmpStrOwner, _str, _strOwner);
+    }
+
+    function versionRecipient()
+        external
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        return "1.0";
+    }
 }
