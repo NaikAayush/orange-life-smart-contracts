@@ -1,5 +1,15 @@
 # Orange Smart Contracts
 
+## Contracts
+
+### `OrangeLife.sol`
+
+This is the main contract which handles all medical records.
+
+### `OrangePayMaster.sol`
+
+This is a GSN PayMaster used for gasless transactions. [Reference](https://docs.opengsn.org/javascript-client/tutorial.html#creating-a-paymaster).
+
 ## Requirements
 
  - Node, npm
@@ -41,4 +51,7 @@ npx truffle console --network matic
 
 paymaster = await OrangePayMaster.deployed()
 paymaster.setTarget("0x9cc6c1FB0ee80a2389a286da0BB7903dE0175172")
+
+// pay paymaster
+web3.eth.sendTransaction({from: accounts[0], to: paymaster.address, value: 1e18})
 ```
