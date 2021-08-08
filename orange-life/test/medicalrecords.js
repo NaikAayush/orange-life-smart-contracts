@@ -4,7 +4,7 @@ contract("Test orange life", async accounts => {
     it("should add and get new medical record", async () => {
         const docCID = "QmbWqxBEKC3P8tqsKc98xmWNzrzDtRLMiMPL8wBuTGsMnR";
         const orange = await OrangeLife.deployed();
-        await orange.addMedicalRecord(docCID, "0314e0715b1be36b2a034ba528594f39881996618c54b3888eddbd5eff7b558940", "037b5079cdeeb1b778614ae4eb54abee2f052888d9ef9de807662bacad1dad7a01", 1, {"from": accounts[0]});
+        await orange.addMedicalRecord(docCID, "0314e0715b1be36b2a034ba528594f39881996618c54b3888eddbd5eff7b558940", "037b5079cdeeb1b778614ae4eb54abee2f052888d9ef9de807662bacad1dad7a01", "abc.jpg", "image/jpeg", "", 1, {"from": accounts[0]});
 
         const res1 = await orange.getMedicalRecords(accounts[0]);
         assert.equal(res1.length, 1);
@@ -16,7 +16,7 @@ contract("Test orange life", async accounts => {
     it("should add and get particular medical record", async () => {
         const docCID = "QmbWqxBEKC3P8tqsKc98xmWNzrzDtRLMiMPL8wBuTGsMnS";
         const orange = await OrangeLife.deployed();
-        await orange.addMedicalRecord(docCID, "0314e0715b1be36b2a034ba528594f39881996618c54b3888eddbd5eff7b558940", "037b5079cdeeb1b778614ae4eb54abee2f052888d9ef9de807662bacad1dad7a01", 100, {"from": accounts[0]});
+        await orange.addMedicalRecord(docCID, "0314e0715b1be36b2a034ba528594f39881996618c54b3888eddbd5eff7b558940", "037b5079cdeeb1b778614ae4eb54abee2f052888d9ef9de807662bacad1dad7a01", "abc.jpg", "image/jpeg", "", 100, {"from": accounts[0]});
 
         const res1 = await orange.getMedicalRecord(accounts[0], 1);;
         assert.equal(res1.docCID, docCID);

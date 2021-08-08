@@ -13,6 +13,9 @@ contract OrangeLife is BaseRelayRecipient {
         string docCID;
         string verifyingKey;
         string publicKey;
+        string docName;
+        string docMimeType;
+        string extraData;
         uint32 nonce;
         address[] hasAccess;
         address[] accessRequested;
@@ -32,6 +35,9 @@ contract OrangeLife is BaseRelayRecipient {
         string docCID,
         string verifyingKey,
         string publicKey,
+        string docName,
+        string docMimeType,
+        string extraData,
         uint32 nonce
     );
     // event AccessedAllMedicalRecords(address accessor, address owner);
@@ -85,6 +91,9 @@ contract OrangeLife is BaseRelayRecipient {
         string memory docCID,
         string memory verifyingKey,
         string memory publicKey,
+        string memory docName,
+        string memory docMimeType,
+        string memory extraData,
         uint32 nonce
     ) public {
         address sender = _msgSender();
@@ -104,7 +113,10 @@ contract OrangeLife is BaseRelayRecipient {
                 hasAccess: hasAccess,
                 accessRequested: accessRequested,
                 verifyingKey: verifyingKey,
-                publicKey: publicKey
+                publicKey: publicKey,
+                docName: docName,
+                docMimeType: docMimeType,
+                extraData: extraData
             })
         );
 
@@ -114,6 +126,9 @@ contract OrangeLife is BaseRelayRecipient {
             docCID,
             verifyingKey,
             publicKey,
+            docName,
+            docMimeType,
+            extraData,
             nonce
         );
     }
