@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.6.10;
 pragma experimental ABIEncoderV2;
-
-// SPDX-License-Identifier: MIT OR Apache-2.0
 
 import "@opengsn/contracts/src/forwarder/IForwarder.sol";
 import "@opengsn/contracts/src/BasePaymaster.sol";
