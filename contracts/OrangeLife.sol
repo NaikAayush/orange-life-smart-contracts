@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.5.16 <0.9.0;
 
 // enable support to return a dynamic array (MedicalRecord[] in our case)
